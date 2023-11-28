@@ -1,5 +1,5 @@
 $(() => {
-  const endpointUrl = "https://localhost:7049/api/file-manager-azure-access";
+  const endpointUrl = 'https://localhost:7049/api/file-manager-azure-access';
   gateway = new AzureGateway(endpointUrl, onRequestExecuted);
   azure = new AzureFileSystem(gateway);
 
@@ -14,7 +14,7 @@ $(() => {
     downloadItems,
   });
 
-  $("#file-manager").dxFileManager({
+  $('#file-manager').dxFileManager({
     fileSystemProvider: provider,
     allowedFileExtensions: [],
     upload: {
@@ -42,7 +42,9 @@ function createDirectory(parentDirectory, name) {
 }
 
 function renameItem(item, name) {
-  return item.isDirectory ? azure.renameDirectory(item.path, name) : azure.renameFile(item.path, name);
+  return item.isDirectory
+    ? azure.renameDirectory(item.path, name)
+    : azure.renameFile(item.path, name);
 }
 
 function deleteItem(item) {
@@ -51,12 +53,16 @@ function deleteItem(item) {
 
 function copyItem(item, destinationDirectory) {
   const destinationPath = destinationDirectory.path ? `${destinationDirectory.path}/${item.name}` : item.name;
-  return item.isDirectory ? azure.copyDirectory(item.path, destinationPath) : azure.copyFile(item.path, destinationPath);
+  return item.isDirectory
+    ? azure.copyDirectory(item.path, destinationPath)
+    : azure.copyFile(item.path, destinationPath);
 }
 
 function moveItem(item, destinationDirectory) {
   const destinationPath = destinationDirectory.path ? `${destinationDirectory.path}/${item.name}` : item.name;
-  return item.isDirectory ? azure.moveDirectory(item.path, destinationPath) : azure.moveFile(item.path, destinationPath);
+  return item.isDirectory
+    ? azure.moveDirectory(item.path, destinationPath)
+    : azure.moveFile(item.path, destinationPath);
 }
 
 function uploadFileChunk(fileData, uploadInfo, destinationDirectory) {
@@ -70,11 +76,12 @@ function uploadFileChunk(fileData, uploadInfo, destinationDirectory) {
   } else {
     promise = Promise.resolve();
   }
-
+  // eslint-disable-next-line max-len
   promise = promise.then(() => gateway.putBlock(uploadInfo.customData.accessUrl, uploadInfo.chunkIndex, uploadInfo.chunkBlob));
 
   if (uploadInfo.chunkIndex === uploadInfo.chunkCount - 1) {
-    promise = promise.then(() => gateway.putBlockList(uploadInfo.customData.accessUrl, uploadInfo.chunkCount));
+    promise = promise
+      .then(() => gateway.putBlockList(uploadInfo.customData.accessUrl, uploadInfo.chunkCount));
   }
 
   return promise;
@@ -85,16 +92,24 @@ function downloadItems(items) {
 }
 
 function onRequestExecuted(e) {
-  $("<div>")
-    .addClass("request-info")
-    .append(createParameterInfoDiv("Method:", e.method), createParameterInfoDiv("Url path:", e.urlPath), createParameterInfoDiv("Query string:", e.queryString), $("<br>"))
-    .prependTo("#request-panel");
+  $('<div>')
+    .addClass('request-info')
+    .append(
+      createParameterInfoDiv('Method:', e.method),
+      createParameterInfoDiv('Url path:', e.urlPath),
+      createParameterInfoDiv('Query string:', e.queryString),
+      $('<br>'),
+    )
+    .prependTo('#request-panel');
 }
 
 function createParameterInfoDiv(name, value) {
-  return $("<div>")
-    .addClass("parameter-info")
-    .append($("<div>").addClass("parameter-name").text(name), $("<div>").addClass("parameter-value dx-theme-accent-as-text-color").text(value).attr("title", value));
+  return $('<div>')
+    .addClass('parameter-info')
+    .append(
+      $('<div>').addClass('parameter-name').text(name),
+      $('<div>').addClass('parameter-value dx-theme-accent-as-text-color').text(value).attr('title', value),
+    );
 }
 
 let gateway = null;
