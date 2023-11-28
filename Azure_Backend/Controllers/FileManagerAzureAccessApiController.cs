@@ -1,14 +1,13 @@
-﻿using Azure.Storage;
+﻿using Azure.Storage.Blobs;
+using Azure.Storage;
 using Azure.Storage.Sas;
-using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
 using Microsoft.AspNetCore.Mvc;
-using BackendApp.Models;
 
-namespace BackendApp.Controllers
+namespace Azure_Backend.Controllers
 {
-    public class FileManagerAzureAccessApiController : Controller
+    public class FileManagerAzureAccessApiController
     {
         const string EmptyDirDummyBlobName = "aspxAzureEmptyFolderBlob";
         const string ServiceUri = "https://{0}.blob.core.windows.net";

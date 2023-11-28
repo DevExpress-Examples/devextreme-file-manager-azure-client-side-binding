@@ -1,4 +1,4 @@
-﻿namespace BackendApp.Models
+﻿namespace Azure_Backend
 {
     public class AzureStorageAccount
     {
