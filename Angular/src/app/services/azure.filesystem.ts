@@ -1,5 +1,6 @@
 import FileSystemItem from 'devextreme/file_management/file_system_item';
-import { AzureGateway, AccessUrls, FileEntry } from './azure.gateway';
+import { AccessUrls, FileEntry, AzureResponse } from './app.service.types';
+import { AzureGateway } from './azure.gateway';
 
 export class AzureFileSystem {
   gateway: AzureGateway;
@@ -16,17 +17,17 @@ export class AzureFileSystem {
     return this.gateway.getBlobList(prefix).then((entries) => this.getDataObjectsFromEntries(entries, prefix));
   }
 
-  createDirectory(path: string, name: string): Promise<any> {
+  createDirectory(path: string, name: string): Promise<AzureResponse> {
     var blobName = path ? `${path}/${name}` : name;
     return this.gateway.createDirectoryBlob(blobName);
   }
 
-  renameFile(path: string, name: string): Promise<any> {
+  renameFile(path: string, name: string): Promise<AzureResponse> {
     var newPath = this.getPathWithNewName(path, name);
     return this.moveFile(path, newPath);
   }
 
-  renameDirectory(path: string, name: string): Promise<any> {
+  renameDirectory(path: string, name: string): Promise<AzureResponse[]> {
     var newPath = this.getPathWithNewName(path, name);
     return this.moveDirectory(path, newPath);
   }
@@ -37,36 +38,36 @@ export class AzureFileSystem {
     return parts.join('/');
   }
 
-  deleteFile(path: string): Promise<any> {
+  deleteFile(path: string): Promise<AzureResponse> {
     return this.gateway.deleteBlob(path);
   }
 
-  deleteDirectory(path: string): Promise<any> {
+  deleteDirectory(path: string): Promise<AzureResponse[]> {
     var prefix = this.getDirectoryBlobName(path);
     return this.executeActionForEachEntry(prefix, (entry: FileSystemItem) => this.gateway.deleteBlob(entry.name));
   }
 
-  copyFile(sourcePath: string, destinationPath: string): Promise<any> {
+  copyFile(sourcePath: string, destinationPath: string): Promise<AzureResponse> {
     return this.gateway.copyBlob(sourcePath, destinationPath);
   }
 
-  copyDirectory(sourcePath: string, destinationPath: string): Promise<any> {
+  copyDirectory(sourcePath: string, destinationPath: string): Promise<AzureResponse[]> {
     var prefix = this.getDirectoryBlobName(sourcePath);
     var destinationKey = this.getDirectoryBlobName(destinationPath);
     return this.executeActionForEachEntry(prefix, (entry: FileSystemItem) => this.copyEntry(entry, prefix, destinationKey));
   }
 
-  copyEntry(entry: FileSystemItem, sourceKey: string, destinationKey: string): Promise<any> {
-    var restName = entry.name.substr(sourceKey.length);
+  copyEntry(entry: FileSystemItem, sourceKey: string, destinationKey: string): Promise<AzureResponse> {
+    var restName = entry.name.substring(sourceKey.length);
     var newDestinationKey = destinationKey + restName;
     return this.gateway.copyBlob(entry.name, newDestinationKey);
   }
 
-  moveFile(sourcePath: string, destinationPath: string): Promise<any> {
+  moveFile(sourcePath: string, destinationPath: string): Promise<AzureResponse> {
     return this.gateway.copyBlob(sourcePath, destinationPath).then(() => this.gateway.deleteBlob(sourcePath));
   }
 
-  moveDirectory(sourcePath: string, destinationPath: string): Promise<any> {
+  moveDirectory(sourcePath: string, destinationPath: string): Promise<AzureResponse[]> {
     var prefix = this.getDirectoryBlobName(sourcePath);
     var destinationKey = this.getDirectoryBlobName(destinationPath);
     return this.executeActionForEachEntry(prefix, (entry: FileSystemItem) => this.copyEntry(entry, prefix, destinationKey).then(() => this.gateway.deleteBlob(entry.name)));
@@ -74,13 +75,13 @@ export class AzureFileSystem {
 
   downloadFile(path: string): void {
     this.gateway.getBlobUrl(path).then((accessUrls: AccessUrls) => {
-      window.location.href = accessUrls.url1;
+      window.location.href = accessUrls.url1 ?? '';
     }, (e) => new Error(e));
   }
 
-  executeActionForEachEntry(prefix: string, action: Function): Promise<FileEntry[]> {
+  executeActionForEachEntry(prefix: string, action: Function): Promise<AzureResponse[]> {
     return this.gateway.getBlobList(prefix).then((entries) => {
-      var deferreds = entries.map((entry) => action(entry) as Promise<FileEntry>);
+      var deferreds = entries.map((entry) => action(entry) as Promise<AzureResponse>);
       return Promise.all(deferreds);
     });
   }
@@ -90,7 +91,7 @@ export class AzureFileSystem {
     const directories: Record<string, FileSystemItem> = {};
 
     entries.forEach((entry) => {
-      let restName = entry.name?.substr(prefix.length) || '';
+      let restName = entry.name?.substring(prefix.length) ?? '';
       const parts = restName?.split('/') || '';
 
       if (parts.length === 1) {

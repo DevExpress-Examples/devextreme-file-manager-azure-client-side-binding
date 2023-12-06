@@ -1,7 +1,11 @@
-export class AzureGateway {
-  endpointUrl: any;
+import {
+  FileEntry, AccessUrls, AzureResponse, CommandParams, isUrlResponse, RequestParams, AzureObject,
+} from './app.service.types';
 
-  onRequestExecuted: any;
+export class AzureGateway {
+  endpointUrl: string;
+
+  onRequestExecuted: Function | undefined;
 
   constructor(endpointUrl: string, onRequestExecuted?: Function) {
     this.endpointUrl = endpointUrl;
@@ -10,8 +14,11 @@ export class AzureGateway {
 
   getBlobList(prefix: string): Promise<FileEntry[]> {
     return this.getAccessUrl('BlobList')
-      .then((accessUrls: AccessUrls) => this.executeBlobListRequest(accessUrls.url1, prefix))
-      .then((xml) => this.parseEntryListResult(xml));
+      .then((accessUrls: AccessUrls) => this.executeBlobListRequest(accessUrls.url1 ?? '', prefix))
+      .then((xml) => {
+        if (typeof xml === 'string') return this.parseEntryListResult(xml);
+        return [];
+      });
   }
 
   parseEntryListResult(xmlString: string): FileEntry[] {
@@ -19,28 +26,28 @@ export class AzureGateway {
     return Array.from(xml.querySelectorAll('Blob')).map(this.parseEntry);
   }
 
-  parseEntry(xmlEntry: any): FileEntry {
-    var entry: FileEntry = {
+  parseEntry(xmlEntry: Element): FileEntry {
+    const entry: FileEntry = {
       etag: '',
       name: '',
       lastModified: undefined,
       length: 0,
     };
 
-    entry.etag = xmlEntry.querySelector('Etag').textContent;
-    entry.name = xmlEntry.querySelector('Name').textContent;
+    entry.etag = xmlEntry.querySelector('Etag')?.textContent;
+    entry.name = xmlEntry.querySelector('Name')?.textContent;
 
-    var dateStr = xmlEntry.querySelector('Last-Modified').textContent;
-    entry.lastModified = new Date(dateStr);
+    const dateStr = xmlEntry.querySelector('Last-Modified')?.textContent;
+    if (dateStr) entry.lastModified = new Date(dateStr);
 
-    var lengthStr = xmlEntry.querySelector('Content-Length').textContent;
-    entry.length = parseInt(lengthStr, 10);
+    const lengthStr = xmlEntry.querySelector('Content-Length')?.textContent;
+    if (lengthStr) entry.length = parseInt(lengthStr, 10);
 
     return entry;
   }
 
-  executeBlobListRequest(accessUrl: string, prefix: string): Promise<any> {
-    var params: RequestParams = {
+  executeBlobListRequest(accessUrl: string, prefix: string): Promise<AzureResponse> {
+    const params: CommandParams = {
       restype: 'container',
       comp: 'list',
     };
@@ -50,7 +57,7 @@ export class AzureGateway {
     return this.executeRequest(accessUrl, params);
   }
 
-  createDirectoryBlob(name: string): Promise<any> {
+  createDirectoryBlob(name: string): Promise<AzureResponse> {
     return this.getAccessUrl('CreateDirectory', name).then((accessUrls: AccessUrls) => this.executeRequest({
       url: accessUrls.url1,
       method: 'PUT',
@@ -62,26 +69,26 @@ export class AzureGateway {
     }));
   }
 
-  deleteBlob(name: string): Promise<any> {
+  deleteBlob(name: string): Promise<AzureResponse> {
     return this.getAccessUrl('DeleteBlob', name).then((accessUrls: AccessUrls) => this.executeRequest({
       url: accessUrls.url1,
       method: 'DELETE',
     }));
   }
 
-  copyBlob(sourceName: string, destinationName: string): Promise<any> {
+  copyBlob(sourceName: string, destinationName: string): Promise<AzureResponse> {
     return this.getAccessUrl('CopyBlob', sourceName, destinationName).then((accessUrls: AccessUrls) => this.executeRequest({
       url: accessUrls.url2,
       method: 'PUT',
       headers: {
-        'x-ms-copy-source': accessUrls.url1,
+        'x-ms-copy-source': accessUrls.url1 ?? '',
       },
     }));
   }
 
-  putBlock(uploadUrl: string, blockIndex: number, blockBlob: Blob): Promise<any> {
-    var blockId = this.getBlockId(blockIndex);
-    var params: RequestParams = {
+  putBlock(uploadUrl: string, blockIndex: number, blockBlob: Blob): Promise<AzureResponse> {
+    const blockId = this.getBlockId(blockIndex);
+    const params: CommandParams = {
       comp: 'block',
       blockid: blockId,
     };
@@ -97,9 +104,9 @@ export class AzureGateway {
     );
   }
 
-  putBlockList(uploadUrl: string, blockCount: number): Promise<any> {
-    var content = this.getBlockListContent(blockCount);
-    var params: RequestParams = {
+  putBlockList(uploadUrl: string, blockCount: number): Promise<AzureResponse> {
+    const content = this.getBlockListContent(blockCount);
+    const params: CommandParams = {
       comp: 'blocklist',
     };
     return this.executeRequest(
@@ -113,10 +120,10 @@ export class AzureGateway {
   }
 
   getBlockListContent(blockCount: number): string {
-    var contentParts = ['<?xml version="1.0" encoding="utf-8"?>', '<BlockList>'];
+    const contentParts = ['<?xml version="1.0" encoding="utf-8"?>', '<BlockList>'];
 
-    for (var i = 0; i < blockCount; i++) {
-      var blockContent = `  <Latest>${this.getBlockId(i)}</Latest>`;
+    for (let i = 0; i < blockCount; i++) {
+      let blockContent = `  <Latest>${this.getBlockId(i)}</Latest>`;
       contentParts.push(blockContent);
     }
 
@@ -125,7 +132,7 @@ export class AzureGateway {
   }
 
   getBlockId(blockIndex: number): string {
-    var res = `${blockIndex}`;
+    let res = `${blockIndex}`;
     while (res.length < 10) {
       res = `0${res}`;
     }
@@ -141,7 +148,7 @@ export class AzureGateway {
   }
 
   getAccessUrl(command: string, blobName?: string, blobName2?: string): Promise<AccessUrls> {
-    var url = `${this.endpointUrl}?command=${command}`;
+    let url = `${this.endpointUrl}?command=${command}`;
     if (blobName) {
       url += `&blobName=${encodeURIComponent(blobName)}`;
     }
@@ -150,78 +157,61 @@ export class AzureGateway {
     }
 
     return new Promise((resolve, reject) => {
-      this.executeRequest(url).then((x: any) => {
-        if (x.success) {
-          resolve({ url1: x.accessUrl, url2: x.accessUrl2 });
-        } else {
-          reject(x.error);
-        }
-      }).catch((e) => new Error(e));
+      this.executeRequest(url)
+        .then((x: AzureResponse) => {
+          if (isUrlResponse(x)) {
+            if (x.success) {
+              resolve({ url1: x.accessUrl, url2: x.accessUrl2 });
+            } else {
+              reject(x.error);
+            }
+          } else reject(new Error('wrong response type'));
+        })
+        .catch(() => reject(new Error('failed to load data')));
     });
   }
 
-  executeRequest(args: any, commandParams?: RequestParams): Promise<Response | string | Record<string, unknown>> {
+  async executeRequest(args: RequestParams | string, commandParams?: CommandParams): Promise<AzureResponse> {
     const ajaxArgs = typeof args === 'string' ? { url: args } : args;
 
-    const method = ajaxArgs.method || 'GET';
+    const method = ajaxArgs.method ?? 'GET';
 
-    const urlParts = ajaxArgs.url.split('?');
-    const urlPath = urlParts[0];
-    const restQueryString = urlParts[1];
+    const urlParts = ajaxArgs.url?.split('?');
+    const urlPath = urlParts ? urlParts[0] : '';
+    const restQueryString = urlParts ? urlParts[1] : '';
     const commandQueryString = commandParams ? this.getQueryString(commandParams) : '';
 
-    let queryString = commandQueryString || '';
+    let queryString = commandQueryString ?? '';
     if (restQueryString) {
       queryString = queryString ? `${queryString}&${restQueryString}` : restQueryString;
     }
 
     ajaxArgs.url = queryString ? `${urlPath}?${queryString}` : urlPath;
 
-    return fetch(ajaxArgs.url, ajaxArgs)
-      .then((x) => {
-        const eventArgs = {
-          method,
-          urlPath,
-          queryString,
-        };
-        if (this.onRequestExecuted) {
-          this.onRequestExecuted(eventArgs);
-        }
-        return x;
-      })
-      .then(async (x) => {
-        if (x.status === 200 || x.status === 201) {
-          const text = await x.text();
-          try {
-            return { success: true, ...JSON.parse(text) } as Record<string, unknown>;
-          } catch (ex) {
-            return text;
-          }
-        } else {
-          return { error: x.statusText };
-        }
-      });
+    const response = await fetch(ajaxArgs.url, ajaxArgs);
+    const eventArgs = {
+      method,
+      urlPath,
+      queryString,
+    };
+    if (this.onRequestExecuted) {
+      this.onRequestExecuted(eventArgs);
+    }
+    if (response.status === 200 || response.status === 201) {
+      const text = await response.text();
+      try {
+        return { success: true, ...JSON.parse(text) } as AzureObject;
+      } catch (ex) {
+        return text;
+      }
+    } else {
+      return Promise.reject(new Error(response.statusText));
+    }
   }
 
-  getQueryString(params: RequestParams): string {
+  getQueryString(params: CommandParams): string {
     return Object.keys(params)
-      .map((key) => `${key}=${encodeURIComponent(params[key as keyof RequestParams] ?? '')}`)
+      .map((key) => `${key}=${encodeURIComponent(params[key as keyof CommandParams] ?? '')}`)
       .join('&');
   }
-}
-export interface FileEntry {
-  etag: string;
-  name: string;
-  lastModified: Date | undefined;
-  length: number;
-}
-interface RequestParams {
-  restype?: string;
-  comp?: string;
-  prefix?: string;
-  blockid?: string;
-}
-export interface AccessUrls {
-  url1: string;
-  url2: string;
 }
