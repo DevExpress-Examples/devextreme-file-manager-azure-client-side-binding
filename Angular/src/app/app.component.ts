@@ -1,20 +1,31 @@
 import { Component } from '@angular/core';
-import { ClickEvent } from 'devextreme/ui/button';
+
+import CustomFileSystemProvider from 'devextreme/file_management/custom_provider';
+import { Service } from './services/app.service';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
+  providers: [Service],
 })
 export class AppComponent {
-  title = 'Angular';
+  allowedFileExtensions: string[];
 
-  counter = 0;
+  fileSystemProvider!: CustomFileSystemProvider;
 
-  buttonText = 'Click count: 0';
+  requests: any[];
 
-  onClick(e: ClickEvent): void {
-    this.counter++;
-    this.buttonText = `Click count: ${this.counter}`;
+  constructor(service: Service) {
+    const endpointUrl = 'https://localhost:7049/api/file-manager-azure-access';
+    this.allowedFileExtensions = [];
+
+    this.requests = [];
+    this.fileSystemProvider = service.getAzureFileSystemProvider(endpointUrl, this.onRequestExecuted);
   }
+
+  onRequestExecuted = ({ method, urlPath, queryString }: { method: string; urlPath: string; queryString: string }): void => {
+    const request = { method, urlPath, queryString };
+    this.requests.unshift(request);
+  };
 }
