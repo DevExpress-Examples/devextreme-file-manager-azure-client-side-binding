@@ -6,7 +6,7 @@
 
 This example illustrates how to use the custom file provider to connect the FileManager component to the Azure Blob Storage on the client side. The [Custom File System Provider](https://js.devexpress.com/Documentation/ApiReference/UI_Components/dxFileManager/File_System_Providers/Custom) allows you to implement custom APIs to handle file operations (add, delete, rename, etc.). All APIs that implement access to Azure Blob Storage on the client are stored in the azure.file.system.js file (app.service.ts - for Angular framework). On the server, configure the [Shared Access Signature (SAS)](https://docs.microsoft.com/en-us/azure/storage/common/storage-sas-overview) to grant access to blobs in the storage.
 
-If you run an Angular, React, Vue, or jQuery example, you need also to run a .NET-based backend project **Azure_Backend**. To connect this project to an Azure server, you need to specify your Azure credentials in [appsettings.json](Azure_Backend/appsettings.json):
+If you run an Angular, React, Vue, or jQuery example, you need to also run a .NET-based backend project - **Azure_Backend**. To connect this project to an Azure server, you need to specify your Azure credentials in [appsettings.json](Azure_Backend/appsettings.json):
 
 ```json
 "AzureStorage": {
