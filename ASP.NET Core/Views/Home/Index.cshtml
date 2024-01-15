@@ -2,28 +2,109 @@
 
 <h2>Home</h2>
 
-@(Html.DevExtreme().DataGrid<SampleOrder>()
-    .ShowBorders(true)
-    .DataSource(d => d.Mvc().Controller("SampleData").LoadAction("Get").Key("OrderID"))
-    .Columns(columns => {
-        columns.AddFor(m => m.OrderID);
-        columns.AddFor(m => m.OrderDate);
-        columns.AddFor(m => m.CustomerName);
-        columns.AddFor(m => m.ShipCountry);
-        columns.AddFor(m => m.ShipCity);
-    })
-    .Paging(p => p.PageSize(10))
-    .FilterRow(f => f.Visible(true))
-    .HeaderFilter(f => f.Visible(true))
-    .GroupPanel(p => p.Visible(true))
-    .Grouping(g => g.AutoExpandAll(false))
-    .RemoteOperations(true)
-    .Summary(s => s
-        .TotalItems(totalItems => {
-            totalItems.AddFor(m => m.ShipCity).SummaryType(SummaryType.Count);
+@(Html.DevExtreme().FileManager()
+        .ID("file-manager")
+        .FileSystemProvider(provider => provider.Custom()
+            .GetItems("getItems")
+            .CreateDirectory("createDirectory")
+            .RenameItem("renameItem")
+            .DeleteItem("deleteItem")
+            .CopyItem("copyItem")
+            .MoveItem("moveItem")
+            .UploadFileChunk("uploadFileChunk")
+            .DownloadItems("downloadItems")
+        )
+        .Permissions(permissions =>
+        {
+            permissions.Download(true);
+            // uncomment the code below to enable file/folder management
+            // permissions.Create(true);
+            // permissions.Copy(true);
+            // permissions.Move(true);
+            // permissions.Delete(true);
+            // permissions.Rename(true);
+            // permissions.Upload(true);
         })
-        .GroupItems(groupItems => {
-            groupItems.Add().SummaryType(SummaryType.Count);
-        })
+        .Upload(upload => upload.MaxFileSize(1048576))
+        .AllowedFileExtensions(new string[0])
     )
-)
+<div id="request-panel"></div>
+<script src="~/js/azure.gateway.js"></script>
+<script src="~/js/azure.filesystem.js"></script>
+<script type="text/javascript">
+    function getItems(parentDirectory) {
+        return azure.getItems(parentDirectory.path);
+    }
+
+    function createDirectory(parentDirectory, name) {
+        return azure.createDirectory(parentDirectory.path, name);
+    }
+
+    function renameItem(item, name) {
+        return item.isDirectory ? azure.renameDirectory(item.path, name) : azure.renameFile(item.path, name);
+    }
+
+    function deleteItem(item) {
+        return item.isDirectory ? azure.deleteDirectory(item.path) : azure.deleteFile(item.path);
+    }
+
+    function copyItem(item, destinationDirectory) {
+        var destinationPath = destinationDirectory.path ? destinationDirectory.path + "/" + item.name : item.name;
+        return item.isDirectory ? azure.copyDirectory(item.path, destinationPath) : azure.copyFile(item.path, destinationPath);
+    }
+
+    function moveItem(item, destinationDirectory) {
+        var destinationPath = destinationDirectory.path ? destinationDirectory.path + "/" + item.name : item.name;
+        return item.isDirectory ? azure.moveDirectory(item.path, destinationPath) : azure.moveFile(item.path, destinationPath);
+    }
+
+    function uploadFileChunk(fileData, uploadInfo, destinationDirectory) {
+        var promise = null;
+
+        if (uploadInfo.chunkIndex === 0) {
+            var filePath = destinationDirectory.path ? destinationDirectory.path + "/" + fileData.name : fileData.name;
+            promise = gateway.getUploadAccessUrl(filePath).then(function (accessUrls) {
+                uploadInfo.customData.accessUrl = accessUrls.url1;
+            });
+        } else {
+            promise = Promise.resolve();
+        }
+
+        promise = promise.then(function () {
+            return gateway.putBlock(uploadInfo.customData.accessUrl, uploadInfo.chunkIndex, uploadInfo.chunkBlob);
+        });
+
+        if (uploadInfo.chunkIndex === uploadInfo.chunkCount - 1) {
+            promise = promise.then(function () {
+                return gateway.putBlockList(uploadInfo.customData.accessUrl, uploadInfo.chunkCount);
+            });
+        }
+
+        return promise;
+    }
+
+    function downloadItems(items) {
+        azure.downloadFile(items[0].path);
+    }
+
+    function onRequestExecuted(e) {
+        $("<div>").addClass("request-info").append(
+            createParameterInfoDiv("Method:", e.method),
+            createParameterInfoDiv("Url path:", e.urlPath),
+            createParameterInfoDiv("Query string:", e.queryString),
+            $("<br>")
+        )
+            .prependTo("#request-panel");
+    }
+
+    function createParameterInfoDiv(name, value) {
+        return $("<div>").addClass("parameter-info").append(
+            $("<div>").addClass("parameter-name").text(name),
+            $("<div>").addClass("parameter-value dx-theme-accent-as-text-color").text(value).attr("title", value)
+        );
+    }
+
+    var endpointUrl = '@Url.RouteUrl("FileManagerAzureAccessApi")';
+    var gateway = new AzureGateway(endpointUrl, onRequestExecuted);
+    var azure = new AzureFileSystem(gateway);
+</script>
