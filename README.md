@@ -6,7 +6,7 @@
 <!-- default badges end -->
 # DevExtreme File Manager - Azure Client-Side Binding
 
-This example uses a custom file provider to connect the FileManager component to Azure Blob Storage (on the client side). The [Custom File System Provider](https://js.devexpress.com/Documentation/ApiReference/UI_Components/dxFileManager/File_System_Providers/Custom) allows you to implement custom APIs to handle appropriate file operations (add, delete, rename, etc.). All APIs used to access Azure Blob Storage on the client are stored in the azure.file.system.js file (app.service.ts - for Angular framework). On the server, configure [Shared Access Signature (SAS)](https://docs.microsoft.com/en-us/azure/storage/common/storage-sas-overview) to grant access to blobs within the storage.
+This example uses a custom file provider to connect the FileManager component to Azure Blob Storage (on the client side). The [Custom File System Provider](https://js.devexpress.com/Documentation/ApiReference/UI_Components/dxFileManager/File_System_Providers/Custom) allows you to implement custom APIs to handle appropriate file operations (add, delete, rename, etc.). All APIs used to access Azure Blob Storage on the client are stored in the azure.file.system.js file (app.service.ts - for Angular framework). On the server, configure [Shared Access Signature (SAS)](https://learn.microsoft.com/en-us/azure/storage/common/storage-sas-overview) to grant access to blobs within the storage.
 
 **IMPORTANT**
 
