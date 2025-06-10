@@ -1,6 +1,6 @@
 import CustomFileSystemProvider from 'devextreme/file_management/custom_provider';
 import FileSystemItem from 'devextreme/file_management/file_system_item';
-import UploadInfo from 'devextreme/file_management/upload_info';
+import type UploadInfo from 'devextreme/file_management/upload_info';
 
 import { AzureGateway } from './azure.gateway';
 import { AzureFileSystem } from './azure.filesystem';

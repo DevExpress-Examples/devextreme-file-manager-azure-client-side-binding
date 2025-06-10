@@ -1,5 +1,5 @@
 import FileSystemItem from 'devextreme/file_management/file_system_item';
-import { AccessUrls, FileEntry, AzureResponse } from './types';
+import type { AccessUrls, FileEntry, AzureResponse } from './types';
 import { AzureGateway } from './azure.gateway';
 
 export class AzureFileSystem {
