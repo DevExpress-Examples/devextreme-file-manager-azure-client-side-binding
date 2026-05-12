@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "Azure_Backend": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:2110;http://localhost:2111"
+    }
+  }
+}
