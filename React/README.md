@@ -97,7 +97,6 @@ export default tseslint.config({
 })
 ```
 
-
 ## Further help
 
 You can learn more about React in the [React documentation](https://react.dev/learn).
