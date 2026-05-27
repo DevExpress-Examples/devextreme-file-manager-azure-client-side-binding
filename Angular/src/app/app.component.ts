@@ -3,10 +3,11 @@ import { Component } from '@angular/core';
 import CustomFileSystemProvider from 'devextreme/file_management/custom_provider';
 import { Service } from './services/app.service';
 import { DxFileManagerModule } from 'devextreme-angular/ui/file-manager';
+import { NgFor } from '@angular/common';
 
 @Component({
   selector: 'app-root',
-  imports: [DxFileManagerModule],
+  imports: [DxFileManagerModule, NgFor],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
   providers: [Service],
