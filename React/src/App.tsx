@@ -10,7 +10,7 @@ const allowedFileExtensions: string[] = [];
 
 export default function App(): JSX.Element {
   const [requests, setRequests] = useState<
-  { method: string; urlPath: string; queryString: string }[]
+    { method: string; urlPath: string; queryString: string }[]
   >([]);
   const onRequestExecuted = useCallback(
     ({
@@ -23,7 +23,7 @@ export default function App(): JSX.Element {
       queryString: string;
     }): void => {
       const request = { method, urlPath, queryString };
-      setRequests((requests) => [request, ...requests]);
+      setRequests((prevRequests) => [request, ...prevRequests]);
     },
     [],
   );
