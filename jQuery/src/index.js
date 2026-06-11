@@ -76,7 +76,6 @@ function uploadFileChunk(fileData, uploadInfo, destinationDirectory) {
   } else {
     promise = Promise.resolve();
   }
-  // eslint-disable-next-line max-len
   promise = promise.then(() => gateway.putBlock(uploadInfo.customData.accessUrl, uploadInfo.chunkIndex, uploadInfo.chunkBlob));
 
   if (uploadInfo.chunkIndex === uploadInfo.chunkCount - 1) {
