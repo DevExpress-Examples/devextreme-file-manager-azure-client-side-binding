@@ -47,7 +47,6 @@ class AzureFileSystem {
   copyDirectory(sourcePath, destinationPath) {
     const prefix = this.getDirectoryBlobName(sourcePath);
     const destinationKey = this.getDirectoryBlobName(destinationPath);
-    // eslint-disable-next-line max-len
     return this.executeActionForEachEntry(prefix, (entry) => this.copyEntry(entry, prefix, destinationKey));
   }
 
@@ -65,7 +64,6 @@ class AzureFileSystem {
   moveDirectory(sourcePath, destinationPath) {
     const prefix = this.getDirectoryBlobName(sourcePath);
     const destinationKey = this.getDirectoryBlobName(destinationPath);
-    // eslint-disable-next-line max-len
     return this.executeActionForEachEntry(prefix, (entry) => this.copyEntry(entry, prefix, destinationKey).then(() => this.gateway.deleteBlob(entry.name)));
   }
 
