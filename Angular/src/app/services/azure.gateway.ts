@@ -201,7 +201,7 @@ export class AzureGateway {
       const text = await response.text();
       try {
         return { success: true, ...JSON.parse(text) } as AzureObject;
-      } catch (ex) {
+      } catch {
         return text;
       }
     } else {
