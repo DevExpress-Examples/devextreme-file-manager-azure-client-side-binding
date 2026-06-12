@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 
 import CustomFileSystemProvider from 'devextreme/file_management/custom_provider';
 import { Service } from './services/app.service';
@@ -10,6 +10,7 @@ import { NgFor } from '@angular/common';
   imports: [DxFileManagerModule, NgFor],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   providers: [Service],
 })
 export class AppComponent {
